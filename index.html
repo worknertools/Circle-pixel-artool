@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Type play</title>
+    
+
+  </head>
+    
+  <body>
+  <!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xerox Style Mosaic Generator Pro</title>
+    <style>
+        :root {
+            /* 初始动态颜色变量 */
+            --dynamic-color: #B23A1F; 
+            --dynamic-panel: rgba(178, 58, 31, 0.12); 
+            --bg: #fdf5f2; 
+            --text: #000000; 
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            /* 字体抗锯齿优化 */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            width: 320px;
+            background-color: var(--dynamic-panel);
+            border: none;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px; 
+            overflow-y: auto;
+            z-index: 10;
+            flex-shrink: 0;
+            transition: background-color 0.3s ease;
+        }
+
+        .control-group { display: flex; flex-direction: column; gap: 10px; }
+        .label-row { display: flex; justify-content: space-between; align-items: center; }
+        label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #000; }
+        .val-num { font-size: 14px; color: #000; font-family: 'JetBrains Mono', monospace; font-weight: bold; }
+
+        /* UI 控件容器 */
+        .upload-wrapper { 
+            display: flex; background: #fff; align-items: center; justify-content: center; 
+            height: 40px; cursor: pointer; border: none; position: relative; outline: none;
+        }
+        .upload-text { color: #000; font-weight: bold; font-size: 11px; text-transform: uppercase; padding: 0 30px 0 10px; overflow: hidden; white-space: nowrap; }
+        .clear-icon { 
+            color: #000; font-size: 16px; padding: 10px; cursor: pointer; 
+            display: none; position: absolute; right: 5px; font-weight: bold;
+        }
+
+        /* 颜色控制：全兼容去边框 */
+        .color-control-wrap { display: flex; background: #fff; border: none; height: 34px; overflow: hidden; outline: none; }
+        input[type="color"] { 
+            flex: 1; height: 100%; border: none; background: none; cursor: pointer; padding: 0; 
+            appearance: none; -webkit-appearance: none; outline: none;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; border: none; }
+        input[type="color"]::-webkit-color-swatch { border: none; }
+        input[type="color"]::-moz-color-swatch { border: none; }
+
+        .color-input-hex { flex: 1; background: transparent; border: none; color: #000; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; outline: none; text-align: center; }
+
+        /* 形状选择器 */
+        .shape-selector { display: flex; gap: 2px; background: rgba(0,0,0,0.05); padding: 2px; border: none; }
+        .shape-option { flex: 1; position: relative; }
+        .shape-option input { position: absolute; opacity: 0; cursor: pointer; }
+        .shape-btn { display: flex; align-items: center; justify-content: center; height: 34px; font-size: 10px; font-weight: bold; cursor: pointer; color: #000; background: rgba(255,255,255,0.3); transition: 0.2s; border: none; }
+        .shape-option input:checked + .shape-btn { background: #fff; color: #000; }
+
+        /* 滑块：去掉阴影，增强各平台兼容性 */
+        input[type="range"] { appearance: none; -webkit-appearance: none; width: 100%; height: 2px; background: rgba(0,0,0,0.1); outline: none; margin: 10px 0; }
+        input[type="range"]::-webkit-slider-thumb { 
+            appearance: none; -webkit-appearance: none; width: 14px; height: 14px; 
+            background: var(--dynamic-color); border-radius: 50%; cursor: pointer; border: none; 
+            box-shadow: none; /* 去掉阴影 */
+            transition: background-color 0.3s ease;
+        }
+        input[type="range"]::-moz-range-thumb { 
+            width: 14px; height: 14px; background: var(--dynamic-color); border-radius: 50%; cursor: pointer; border: none; 
+            box-shadow: none; /* 去掉阴影 */
+        }
+
+        /* 导出按钮 */
+        .btn { background: #000; color: #fff; border: none; padding: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 10px; transition: 0.3s ease; text-align: center; outline: none; }
+        .btn-outline { background: #fff; color: #000; border: none; }
+        /* 按钮悬停反馈：增加反色效果 */
+        .btn-outline:hover { background: #000; color: #fff; }
+        #randomBtn { background: var(--dynamic-color); color: #fff; }
+        #randomBtn:hover { filter: brightness(1.1); }
+
+        /* 画布渲染：强化清晰度 */
+        .main { flex: 1; background-color: var(--dynamic-color); position: relative; overflow: hidden; display: block; }
+        canvas { 
+            width: 100%; height: 100%; display: block; 
+            /* 保证图像锐利，无模糊缩放 */
+            image-rendering: -webkit-optimize-contrast; 
+            image-rendering: crisp-edges; 
+            image-rendering: pixelated; 
+        }
+
+        .sidebar-footer { margin-top: auto; padding-top: 15px; text-align: center; font-size: 8px; color: #000; opacity: 0.5; }
+    </style>
+</head>
+<body>
+<div class="sidebar">
+    <div class="control-group">
+        <div class="upload-wrapper" id="uploadBtn">
+            <span id="uploadText" class="upload-text">上传图像 (Upload)</span>
+            <span id="clearImg" class="clear-icon">✕</span>
+        </div>
+        <input type="file" id="imgInput" accept="image/*" style="display:none">
+    </div>
+
+    <div class="control-group">
+        <label>画布背景 (Background)</label>
+        <div class="color-control-wrap">
+            <input type="color" id="colorBg" value="#B23A1F">
+            <input type="text" id="colorBgText" class="color-input-hex" value="#B23A1F" maxlength="7">
+        </div>
+    </div>
+
+    <div class="control-group">
+        <label>图形形状 (Shape Style)</label>
+        <div class="shape-selector">
+            <label class="shape-option">
+                <input type="radio" name="shape" value="square" checked>
+                <span class="shape-btn">方块 SQUARE</span>
+            </label>
+            <label class="shape-option">
+                <input type="radio" name="shape" value="circle">
+                <span class="shape-btn">圆形 CIRCLE</span>
+            </label>
+        </div>
+    </div>
+
+    <div class="control-group">
+        <div class="label-row">
+            <label>像素大小 (Pixel Size)</label>
+            <span class="val-num" id="val-pixelSize">25</span>
+        </div>
+        <input type="range" id="pixelSize" min="5" max="80" value="25">
+    </div>
+
+    <div class="control-group">
+        <div class="label-row">
+            <label>图形阈值 (Threshold)</label>
+            <span class="val-num" id="val-threshold">20</span>
+        </div>
+        <input type="range" id="threshold" min="0" max="255" value="20">
+    </div>
+
+    <div class="control-group">
+        <div class="label-row">
+            <label>缩放 (Scale)</label>
+            <span class="val-num" id="val-scale">0.8</span>
+        </div>
+        <input type="range" id="graphicScale" min="0.1" max="3.0" step="0.1" value="0.8">
+    </div>
+
+    <div class="control-group">
+        <label>导出 Export</label>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; gap: 6px;">
+                <button class="btn btn-outline" style="flex:1" id="saveJpgBtn">JPG</button>
+                <button class="btn btn-outline" style="flex:1" id="saveBtn">PNG</button>
+                <button class="btn btn-outline" style="flex:1" id="saveSvgBtn">SVG</button>
+            </div>
+            <button class="btn" id="randomBtn">随机背景 ( Random )</button>
+        </div>
+    </div>
+    <div class="sidebar-footer">2026 TYPE PLAY. ALL RIGHTS RESERVED.</div>
+</div>
+
+<div class="main" id="mainArea">
+    <canvas id="canvas"></canvas>
+</div>
+
+<script>
+    let img = null;
+    let renderPending = false;
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const mainArea = document.getElementById('mainArea');
+    const fileInput = document.getElementById('imgInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const clearImg = document.getElementById('clearImg');
+    const colorBg = document.getElementById('colorBg');
+    const colorBgText = document.getElementById('colorBgText');
+    const randomBtn = document.getElementById('randomBtn');
+
+    function formatFileName(name) {
+        if (name.length <= 16) return name;
+        const start = name.substring(0, 7);
+        const end = name.substring(name.length - 6);
+        return start + '...' + end;
+    }
+
+    function initCanvas() {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = mainArea.getBoundingClientRect();
+        
+        canvas.width = Math.floor(rect.width * dpr);
+        canvas.height = Math.floor(rect.height * dpr);
+        
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr, dpr);
+        ctx.imageSmoothingEnabled = false;
+        
+        requestRender();
+    }
+
+    function requestRender() {
+        if (renderPending) return;
+        renderPending = true;
+        requestAnimationFrame(() => { render(); renderPending = false; });
+    }
+
+    window.onresize = initCanvas;
+
+    uploadBtn.onclick = (e) => { if (e.target === clearImg) return; fileInput.click(); };
+
+    clearImg.onclick = (e) => {
+        e.stopPropagation(); 
+        fileInput.value = ''; 
+        img = null;
+        document.getElementById('uploadText').textContent = "上传图像 (Upload)";
+        clearImg.style.display = 'none'; 
+        requestRender();
+    };
+
+    fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        document.getElementById('uploadText').textContent = formatFileName(file.name);
+        clearImg.style.display = 'block';
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            img = new Image();
+            img.onload = () => requestRender();
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    function render() {
+        const dpr = window.devicePixelRatio || 1;
+        const logicalW = canvas.width / dpr;
+        const logicalH = canvas.height / dpr;
+
+        ctx.fillStyle = colorBg.value;
+        ctx.fillRect(0, 0, logicalW, logicalH);
+
+        if (!img) return;
+
+        const pSize = parseInt(document.getElementById('pixelSize').value);
+        const threshold = parseInt(document.getElementById('threshold').value);
+        const scale = parseFloat(document.getElementById('graphicScale').value);
+        const shape = document.querySelector('input[name="shape"]:checked').value;
+
+        document.getElementById('val-pixelSize').textContent = pSize;
+        document.getElementById('val-threshold').textContent = threshold;
+        document.getElementById('val-scale').textContent = scale.toFixed(1);
+
+        const cols = Math.ceil(logicalW / pSize);
+        const rows = Math.ceil(logicalH / pSize);
+        
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = cols; 
+        tempCanvas.height = rows;
+        const tCtx = tempCanvas.getContext('2d');
+        tCtx.imageSmoothingEnabled = false;
+
+        const ratio = Math.min(cols / img.width, rows / img.height) * scale;
+        const nw = img.width * ratio;
+        const nh = img.height * ratio;
+        
+        tCtx.drawImage(img, (cols - nw) / 2, (rows - nh) / 2, nw, nh);
+
+        const imgData = tCtx.getImageData(0, 0, cols, rows).data;
+
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                const i = (y * cols + x) * 4;
+                const r = imgData[i]; const g = imgData[i+1]; const b = imgData[i+2]; const a = imgData[i+3];
+                if (a < 10 || (r > 255 - threshold && g > 255 - threshold && b > 255 - threshold)) continue;
+
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
+                if (shape === 'square') {
+                    ctx.fillRect(x * pSize, y * pSize, pSize + 0.5, pSize + 0.5);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(x * pSize + pSize/2, y * pSize + pSize/2, pSize/2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+    }
+
+    const syncColors = () => {
+        const hex = colorBg.value.toUpperCase();
+        colorBgText.value = hex;
+        document.documentElement.style.setProperty('--dynamic-color', hex);
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        document.documentElement.style.setProperty('--dynamic-panel', `rgba(${r}, ${g}, ${b}, 0.12)`);
+        requestRender();
+    };
+
+    colorBg.oninput = syncColors;
+    colorBgText.oninput = (e) => {
+        let val = e.target.value;
+        if(val.startsWith('#') && val.length === 7) { colorBg.value = val; syncColors(); }
+    };
+
+    async function downloadFile(format) {
+        if (!img) return;
+        
+        // A3 标准 300DPI 约为 3508 x 4961 像素
+        const exportLongSide = 4961;
+        const exportShortSide = 3508;
+        const currentAspect = canvas.width / canvas.height;
+        
+        const exportCanvas = document.createElement('canvas');
+        if (currentAspect >= 1) { // 横向
+            exportCanvas.width = exportLongSide;
+            exportCanvas.height = exportLongSide / currentAspect;
+        } else { // 纵向
+            exportCanvas.height = exportLongSide;
+            exportCanvas.width = exportLongSide * currentAspect;
+        }
+        
+        const eCtx = exportCanvas.getContext('2d');
+        eCtx.imageSmoothingEnabled = false;
+
+        const pSize = parseInt(document.getElementById('pixelSize').value) * (exportCanvas.width / (canvas.width / (window.devicePixelRatio || 1)));
+        const threshold = parseInt(document.getElementById('threshold').value);
+        const scale = parseFloat(document.getElementById('graphicScale').value);
+        const shape = document.querySelector('input[name="shape"]:checked').value;
+
+        // JPG 导出带背景，PNG 导出保持透明
+        if (format === 'jpg') { 
+            eCtx.fillStyle = colorBg.value; 
+            eCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height); 
+        }
+
+        const cols = Math.ceil(exportCanvas.width / pSize);
+        const rows = Math.ceil(exportCanvas.height / pSize);
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = cols; tempCanvas.height = rows;
+        const tCtx = tempCanvas.getContext('2d');
+        tCtx.imageSmoothingEnabled = false;
+        
+        const ratio = Math.min(cols / img.width, rows / img.height) * scale;
+        tCtx.drawImage(img, (cols - (img.width * ratio)) / 2, (rows - (img.height * ratio)) / 2, img.width * ratio, img.height * ratio);
+        const data = tCtx.getImageData(0, 0, cols, rows).data;
+
+        if (format === 'svg') {
+            // SVG 导出：添加背景 rect 以与画布效果一致
+            let svg = `<svg viewBox="0 0 ${exportCanvas.width} ${exportCanvas.height}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`;
+            svg += `<rect width="100%" height="100%" fill="${colorBg.value}" />`;
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    const i = (y * cols + x) * 4;
+                    if (data[i+3] < 10 || (data[i] > 255-threshold && data[i+1] > 255-threshold && data[i+2] > 255-threshold)) continue;
+                    const color = `rgb(${data[i]},${data[i+1]},${data[i+2]})`;
+                    if (shape === 'square') svg += `<rect x="${x*pSize}" y="${y*pSize}" width="${pSize+0.2}" height="${pSize+0.2}" fill="${color}" />`;
+                    else svg += `<circle cx="${x*pSize + pSize/2}" cy="${y*pSize + pSize/2}" r="${pSize/2}" fill="${color}" />`;
+                }
+            }
+            svg += `</svg>`;
+            const blob = new Blob([svg], {type: 'image/svg+xml'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob); a.download = `mosaic_${Date.now()}.svg`; a.click();
+            return;
+        }
+
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                const i = (y * cols + x) * 4;
+                if (data[i+3] < 10 || (data[i] > 255 - threshold && data[i+1] > 255 - threshold && data[i+2] > 255 - threshold)) continue;
+                eCtx.fillStyle = `rgb(${data[i]},${data[i+1]},${data[i+2]})`;
+                if (shape === 'square') eCtx.fillRect(x * pSize, y * pSize, pSize + 0.5, pSize + 0.5);
+                else { eCtx.beginPath(); eCtx.arc(x * pSize + pSize/2, y * pSize + pSize/2, pSize/2, 0, Math.PI * 2); eCtx.fill(); }
+            }
+        }
+        const a = document.createElement('a');
+        a.download = `mosaic_${Date.now()}.${format}`;
+        a.href = exportCanvas.toDataURL(format === 'png' ? 'image/png' : 'image/jpeg', 0.95);
+        a.click();
+    }
+
+    document.querySelectorAll('#pixelSize, #threshold, #graphicScale, input[name="shape"]').forEach(el => el.oninput = () => requestRender());
+    document.getElementById('saveBtn').onclick = () => downloadFile('png');
+    document.getElementById('saveJpgBtn').onclick = () => downloadFile('jpg');
+    document.getElementById('saveSvgBtn').onclick = () => downloadFile('svg');
+    
+    randomBtn.onclick = () => {
+        const randomHex = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0').toUpperCase();
+        colorBg.value = randomHex;
+        syncColors();
+    };
+
+    initCanvas();
+    syncColors();
+</script>
+</body>
+</html>
+    
+  </body>
+  
+</html>
